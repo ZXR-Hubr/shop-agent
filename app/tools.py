@@ -21,6 +21,11 @@ def _load_json(name: str):
 PRODUCTS: list[dict] = _load_json("products.json")
 ORDERS: dict[str, dict] = {o["order_id"]: o for o in _load_json("orders.json")}
 TICKETS: dict[str, dict] = {}
+# 预置的售后工单（退货 / 换货 / 维修），作为 MySQL 不可用时的回退数据
+try:
+    AFTER_SALES: list[dict] = _load_json("after_sales.json")
+except FileNotFoundError:
+    AFTER_SALES = []
 
 
 def _tags_to_list(raw: str) -> list[str]:
@@ -143,6 +148,35 @@ def create_after_sales(order_id: str, reason: str = "") -> dict:
     }
 
 
+def get_after_sales(order_id: str = "") -> dict:
+    """按订单号查询退货 / 换货 / 维修工单进度；不传订单号则列出最近工单。"""
+    oid = (order_id or "").strip().upper()
+
+    rows = db.fetch_all("SELECT * FROM after_sales_tickets ORDER BY created_at DESC")
+    source = rows if rows is not None else AFTER_SALES
+    matched = [t for t in source if not oid or t.get("order_id", "").upper() == oid]
+
+    items = [
+        {
+            "ticket_id": t.get("ticket_id"),
+            "order_id": t.get("order_id"),
+            "product_name": t.get("product_name"),
+            "type": t.get("type", "退货"),
+            "reason": t.get("reason", ""),
+            "status": t.get("status", "待审核"),
+            "amount": t.get("amount", 0),
+            "created_at": str(t.get("created_at", ""))[:19],
+        }
+        for t in matched
+    ]
+    return {
+        "count": len(items),
+        "items": items,
+        "source": "mysql" if rows is not None else "json",
+        "message": "" if items else (f"订单 {oid} 没有售后工单记录" if oid else "暂无售后工单记录"),
+    }
+
+
 def search_faq(query: str) -> dict:
     """检索店铺规则知识库（退换货、发货、运费、发票、保修、优惠券等）。"""
     return {"query": query, "results": KB.search(query, top_k=3)}
@@ -197,6 +231,20 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "get_after_sales",
+            "description": "查询订单的退货/换货/维修售后工单进度；传订单号查指定订单，不传则列出最近工单。",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "order_id": {"type": "string", "description": "订单号，例如 SO20261111010；可留空查询全部"},
+                },
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "search_faq",
             "description": "检索店铺规则知识库，回答退换货、发货、运费、发票、保修、优惠券等政策问题。",
             "parameters": {
@@ -214,5 +262,6 @@ TOOL_IMPL = {
     "search_products": search_products,
     "get_order": get_order,
     "create_after_sales": create_after_sales,
+    "get_after_sales": get_after_sales,
     "search_faq": search_faq,
 }
