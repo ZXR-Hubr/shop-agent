@@ -1,0 +1,102 @@
+[
+  {
+    "ticket_id": "AS20261111001",
+    "order_id": "SO20261111010",
+    "product_name": "星耀 X1 5G 手机",
+    "type": "退货",
+    "reason": "屏幕到货即有明显划痕，申请退货退款",
+    "status": "退款中",
+    "amount": 3299,
+    "created_at": "2026-11-13 09:20:00"
+  },
+  {
+    "ticket_id": "AS20261113002",
+    "order_id": "SO20261113011",
+    "product_name": "声阔 Air Pro 降噪耳机",
+    "type": "换货",
+    "reason": "左耳偶尔无声音，申请换货",
+    "status": "已同意",
+    "amount": 599,
+    "created_at": "2026-11-14 14:05:00"
+  },
+  {
+    "ticket_id": "AS20261112003",
+    "order_id": "SO20261112001",
+    "product_name": "声阔 Air Pro 降噪耳机",
+    "type": "维修",
+    "reason": "充电盒盖子松动，申请维修",
+    "status": "待审核",
+    "amount": 0,
+    "created_at": "2026-11-16 11:42:00"
+  },
+  {
+    "ticket_id": "AS20261110004",
+    "order_id": "SO20261110004",
+    "product_name": "行者 S2 智能手表",
+    "type": "退货",
+    "reason": "表带佩戴过敏，申请七天无理由退货",
+    "status": "已完成",
+    "amount": 899,
+    "created_at": "2026-11-11 16:33:00"
+  },
+  {
+    "ticket_id": "AS20261109005",
+    "order_id": "SO20261109007",
+    "product_name": "视界 27 英寸 2K 显示器",
+    "type": "换货",
+    "reason": "屏幕右下角有坏点，申请换新",
+    "status": "已同意",
+    "amount": 1099,
+    "created_at": "2026-11-12 10:15:00"
+  },
+  {
+    "ticket_id": "AS20261108006",
+    "order_id": "SO20261108006",
+    "product_name": "青轴 K87 机械键盘",
+    "type": "退货",
+    "reason": "青轴噪音太大不适合办公室，申请退货",
+    "status": "已完成",
+    "amount": 299,
+    "created_at": "2026-11-09 20:18:00"
+  },
+  {
+    "ticket_id": "AS20261117007",
+    "order_id": "SO20261117008",
+    "product_name": "星耀 A3 5G 手机",
+    "type": "退货",
+    "reason": "误下单重复购买，申请拦截退货",
+    "status": "待审核",
+    "amount": 1599,
+    "created_at": "2026-11-17 14:50:00"
+  },
+  {
+    "ticket_id": "AS20261106008",
+    "order_id": "SO20261106009",
+    "product_name": "疾速 65W 氮化镓充电器",
+    "type": "维修",
+    "reason": "充电时发热异常，申请检测维修",
+    "status": "已拒绝",
+    "amount": 0,
+    "created_at": "2026-11-10 08:27:00"
+  },
+  {
+    "ticket_id": "AS20261118009",
+    "order_id": "SO20261118014",
+    "product_name": "迅充 20000mAh 充电宝",
+    "type": "换货",
+    "reason": "到货外壳有磕碰，申请换新",
+    "status": "待审核",
+    "amount": 129,
+    "created_at": "2026-11-18 19:05:00"
+  },
+  {
+    "ticket_id": "AS20261115010",
+    "order_id": "SO20261115003",
+    "product_name": "轻羽 14 轻薄本",
+    "type": "退货",
+    "reason": "未按约定时间发货，客户主动取消并申请退款",
+    "status": "已退款",
+    "amount": 4599,
+    "created_at": "2026-11-16 09:12:00"
+  }
+]
