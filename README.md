@@ -28,7 +28,8 @@
 - 后端：Python 3.10+、FastAPI、Pydantic、httpx（直接请求 OpenAI 兼容接口）
 - 前端：原生 HTML + CSS + JavaScript（无需构建工具）
 - 测试：pytest
-- 存储：默认进程内内存 / 本地向量库；可选 Redis、远程 Embedding API
+- 数据库：MySQL 8.0（PyMySQL 驱动）——商品 / 订单 / 售后工单 / 知识库
+- 存储：默认进程内内存 / 本地向量库；可选 Redis、远程 Embedding API；MySQL 不可用时自动回退到本地 JSON
 
 ---
 
@@ -43,8 +44,12 @@ shop-agent/
 │  ├─ tools.py         # 4 个工具的实现与 JSON Schema
 │  ├─ rag.py           # 知识库向量化与检索
 │  ├─ memory.py        # 会话记忆（内存 / Redis）
+│  ├─ db.py            # MySQL 数据访问层（带 JSON 回退）
+│  ├─ mysql_config.py  # MySQL 连接配置
 │  ├─ config.py        # 环境变量配置
 │  └─ schemas.py       # 请求 / 响应模型
+├─ db/
+│  └─ init_db.py       # 建库建表 + 从 JSON 导入示例数据（幂等）
 ├─ data/
 │  ├─ products.json    # 商品数据（9 条）
 │  ├─ orders.json      # 订单数据（5 条）
@@ -146,6 +151,27 @@ cd E:\shop-agent
 .venv\Scripts\python.exe -m pytest -q      # 19 个单元测试
 .venv\Scripts\python.exe eval/run_eval.py  # 10 条评测用例，结果写入 eval/report.json
 ```
+
+### 4.5 接入 MySQL（可选，默认已配好）
+
+本机 MySQL（root / 123456，端口 3306）已初始化完成，`.env` 里 `MYSQL_ENABLED=1`，
+启动后工具会自动从 MySQL 读写。换机器或想重新初始化时：
+
+```bash
+# 1) 确认 .env 里的 MySQL 连接参数正确
+# 2) 建库建表 + 导入示例数据（幂等，可重复执行）
+.venv\Scripts\python.exe db\init_db.py
+# 3) 验证读写
+.venv\Scripts\python.exe tests\mysql_integration_check.py
+```
+
+健康检查里能看到数据源状态：
+
+```json
+{"status":"ok","data_source":"mysql","mysql_connected":true,"kb_size":12}
+```
+
+> 把 `MYSQL_ENABLED=0` 即可切回本地 JSON；MySQL 连不上时也会自动回退，不影响演示。
 
 ---
 
@@ -336,3 +362,37 @@ cd /d E:\shop-agent
 ## 13. 开发者讲解
 
 想把这个项目讲清楚（开发流程、使用方法、内部逻辑、面试追问），看 [`docs/开发者讲解.md`](docs/开发者讲解.md)。
+
+---
+
+## 14. MySQL 数据库设计
+
+### 表结构
+
+库名 `xiaoman_shop`，四张表：
+
+| 表 | 字段 | 说明 |
+|---|---|---|
+| `products` | product_id(PK), name, category, price, stock, tags, description | 商品，9 条 |
+| `orders` | order_id(PK), product_id, product_name, status, amount, logistics, created_at, address | 订单，5 条 |
+| `kb_articles` | id(PK), title, content, tags | RAG 知识库，12 条 |
+| `after_sales_tickets` | ticket_id(PK), order_id, product_name, reason, status, created_at | 售后工单，运行时写入 |
+
+### 数据访问设计（`app/db.py`）
+
+- **开关控制**：`MYSQL_ENABLED=1` 才连库；`0` 直接用 JSON。
+- **优雅降级**：每个查询包了 try/except，MySQL 连不上时返回 `None`，工具层据此回退到 `data/*.json`——**没装 MySQL 的机器也能完整演示**。
+- **实时读库**：`search_products` / `get_order` / `search_faq` 每次调用都查 MySQL，不是启动时加载。所以**直接改数据库，客服立刻读到新数据**（面试可现场演示）。
+- **写库**：`create_after_sales` 把工单 INSERT 进 `after_sales_tickets`，失败则回退内存字典。
+- **类型处理**：DECIMAL → float、DATETIME → 字符串，避免 FastAPI 序列化报错。
+
+### 初始化脚本（`db/init_db.py`）
+
+幂等：先 `DROP TABLE IF EXISTS` 再建表，从 `data/*.json` 导入，可重复执行。
+连接参数从 `.env` 读，密码不写死在代码里（`.env` 已 gitignore）。
+
+### 面试怎么讲
+
+> 「业务数据没有硬编码在代码里，而是存在 MySQL。我封装了一层数据访问层，用环境变量开关控制数据源，并做了降级设计——数据库不可用时自动回退本地 JSON，保证 Demo 永远能跑。商品和订单是实时查询，所以运营在后台改了数据，客服的回答会立刻跟着变。写操作像创建售后工单会落库，方便后续追踪。」
+
+一句话带出：**分层解耦、配置开关、容错降级、实时性、持久化**，五个点。
