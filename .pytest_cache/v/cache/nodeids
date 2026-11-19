@@ -1,0 +1,21 @@
+[
+  "tests/test_agent.py::test_agent_calls_create_after_sales",
+  "tests/test_agent.py::test_agent_calls_get_order",
+  "tests/test_agent.py::test_agent_uses_faq_tool",
+  "tests/test_agent.py::test_memory_keeps_multi_turn_history",
+  "tests/test_api.py::test_chat_returns_reply_and_session",
+  "tests/test_api.py::test_chat_reuses_session",
+  "tests/test_api.py::test_health",
+  "tests/test_api.py::test_index_page",
+  "tests/test_api.py::test_reset_session",
+  "tests/test_rag.py::test_knowledge_base_returns_relevant_doc",
+  "tests/test_rag.py::test_knowledge_base_scores_are_sorted",
+  "tests/test_rag.py::test_local_vector_is_normalized",
+  "tests/test_tools.py::test_create_after_sales",
+  "tests/test_tools.py::test_create_after_sales_with_unknown_order",
+  "tests/test_tools.py::test_get_order_found_and_missing",
+  "tests/test_tools.py::test_search_faq",
+  "tests/test_tools.py::test_search_products_by_keyword",
+  "tests/test_tools.py::test_search_products_no_match",
+  "tests/test_tools.py::test_search_products_price_filter"
+]
