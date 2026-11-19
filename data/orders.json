@@ -7,7 +7,10 @@
     "amount": 599,
     "logistics": "顺丰速运 SF1234567890",
     "created_at": "2026-11-12 10:21",
-    "address": "河南省郑州市金水区"
+    "address": "河南省郑州市金水区农业路 68 号",
+    "receiver": "张鑫茹",
+    "phone": "138****6621",
+    "quantity": 1
   },
   {
     "order_id": "SO20261114002",
@@ -17,7 +20,10 @@
     "amount": 3299,
     "logistics": "京东物流 JD9988776655",
     "created_at": "2026-11-14 09:05",
-    "address": "河南省郑州市中原区"
+    "address": "河南省郑州市中原区建设路 12 号",
+    "receiver": "李文博",
+    "phone": "159****3388",
+    "quantity": 1
   },
   {
     "order_id": "SO20261115003",
@@ -27,7 +33,10 @@
     "amount": 4599,
     "logistics": "仓库拣货中",
     "created_at": "2026-11-15 20:42",
-    "address": "河南省洛阳市涧西区"
+    "address": "河南省洛阳市涧西区南昌路 30 号",
+    "receiver": "王思远",
+    "phone": "186****2045",
+    "quantity": 1
   },
   {
     "order_id": "SO20261110004",
@@ -37,16 +46,139 @@
     "amount": 899,
     "logistics": "中通快递 ZT5566778899",
     "created_at": "2026-11-10 14:18",
-    "address": "河南省开封市龙亭区"
+    "address": "河南省开封市龙亭区中山路 7 号",
+    "receiver": "赵梦洁",
+    "phone": "137****9012",
+    "quantity": 1
   },
   {
     "order_id": "SO20261116005",
     "product_id": "P1003",
     "product_name": "迅充 20000mAh 充电宝",
     "status": "待发货",
-    "amount": 129,
+    "amount": 258,
     "logistics": "仓库拣货中",
     "created_at": "2026-11-16 11:33",
-    "address": "河南省郑州市二七区"
+    "address": "河南省郑州市二七区二七路 88 号",
+    "receiver": "陈嘉豪",
+    "phone": "188****4567",
+    "quantity": 2
+  },
+  {
+    "order_id": "SO20261108006",
+    "product_id": "P1005",
+    "product_name": "青轴 K87 机械键盘",
+    "status": "已完成",
+    "amount": 299,
+    "logistics": "圆通速递 YT1234567890",
+    "created_at": "2026-11-08 16:47",
+    "address": "河南省新乡市红旗区平原路 15 号",
+    "receiver": "刘宇轩",
+    "phone": "135****7788",
+    "quantity": 1
+  },
+  {
+    "order_id": "SO20261109007",
+    "product_id": "P1006",
+    "product_name": "视界 27 英寸 2K 显示器",
+    "status": "已签收",
+    "amount": 1099,
+    "logistics": "德邦快递 DB5566778812",
+    "created_at": "2026-11-09 08:30",
+    "address": "河南省郑州市高新区科学大道 100 号",
+    "receiver": "孙浩然",
+    "phone": "139****2244",
+    "quantity": 1
+  },
+  {
+    "order_id": "SO20261117008",
+    "product_id": "P1009",
+    "product_name": "星耀 A3 5G 手机",
+    "status": "派送中",
+    "amount": 1599,
+    "logistics": "顺丰速运 SF9988771122",
+    "created_at": "2026-11-17 13:12",
+    "address": "河南省许昌市魏都区七一路 22 号",
+    "receiver": "周雅琳",
+    "phone": "136****5511",
+    "quantity": 1
+  },
+  {
+    "order_id": "SO20261106009",
+    "product_id": "P1008",
+    "product_name": "疾速 65W 氮化镓充电器",
+    "status": "已完成",
+    "amount": 178,
+    "logistics": "中通快递 ZT1122334455",
+    "created_at": "2026-11-06 19:05",
+    "address": "河南省郑州市金水区花园路 66 号",
+    "receiver": "吴俊杰",
+    "phone": "158****9900",
+    "quantity": 2
+  },
+  {
+    "order_id": "SO20261111010",
+    "product_id": "P1001",
+    "product_name": "星耀 X1 5G 手机",
+    "status": "退款中",
+    "amount": 3299,
+    "logistics": "京东物流 JD1122339988",
+    "created_at": "2026-11-11 10:48",
+    "address": "河南省洛阳市西工区中州中路 5 号",
+    "receiver": "郑思琪",
+    "phone": "187****3344",
+    "quantity": 1
+  },
+  {
+    "order_id": "SO20261113011",
+    "product_id": "P1002",
+    "product_name": "声阔 Air Pro 降噪耳机",
+    "status": "换货中",
+    "amount": 599,
+    "logistics": "顺丰速运 SF6677889900",
+    "created_at": "2026-11-13 15:26",
+    "address": "河南省郑州市管城区紫荆山路 9 号",
+    "receiver": "何欣怡",
+    "phone": "150****6677",
+    "quantity": 1
+  },
+  {
+    "order_id": "SO20261118012",
+    "product_id": "P1007",
+    "product_name": "行者 S2 智能手表",
+    "status": "派送中",
+    "amount": 899,
+    "logistics": "京东物流 JD5566771122",
+    "created_at": "2026-11-18 09:32",
+    "address": "河南省焦作市解放区民主南路 18 号",
+    "receiver": "马天宇",
+    "phone": "183****1122",
+    "quantity": 1
+  },
+  {
+    "order_id": "SO20261105013",
+    "product_id": "P1004",
+    "product_name": "轻羽 14 轻薄本",
+    "status": "已取消",
+    "amount": 4599,
+    "logistics": "订单已取消，无物流",
+    "created_at": "2026-11-05 21:14",
+    "address": "河南省南阳市卧龙区人民路 41 号",
+    "receiver": "林子涵",
+    "phone": "134****8899",
+    "quantity": 1
+  },
+  {
+    "order_id": "SO20261118014",
+    "product_id": "P1003",
+    "product_name": "迅充 20000mAh 充电宝",
+    "status": "已签收",
+    "amount": 129,
+    "logistics": "圆通速递 YT9988776655",
+    "created_at": "2026-11-18 17:03",
+    "address": "河南省郑州市惠济区开元路 26 号",
+    "receiver": "徐可欣",
+    "phone": "182****4433",
+    "quantity": 1
   }
 ]
