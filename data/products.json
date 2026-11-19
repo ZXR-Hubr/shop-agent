@@ -1,0 +1,83 @@
+[
+  {
+    "product_id": "P1001",
+    "name": "星耀 X1 5G 手机",
+    "category": "手机",
+    "price": 3299,
+    "stock": 120,
+    "tags": ["5G", "拍照", "快充", "旗舰"],
+    "description": "6.7 英寸 OLED 屏，5000mAh 电池，支持 66W 快充，后置 5000 万像素三摄。"
+  },
+  {
+    "product_id": "P1002",
+    "name": "声阔 Air Pro 降噪耳机",
+    "category": "耳机",
+    "price": 599,
+    "stock": 300,
+    "tags": ["降噪耳机", "主动降噪", "蓝牙5.3", "长续航"],
+    "description": "42dB 主动降噪，单次续航 8 小时，配合充电盒可达 32 小时，支持双设备连接。"
+  },
+  {
+    "product_id": "P1003",
+    "name": "迅充 20000mAh 充电宝",
+    "category": "配件",
+    "price": 129,
+    "stock": 800,
+    "tags": ["充电宝", "22.5W", "快充", "大容量"],
+    "description": "20000mAh 大容量，支持 22.5W 双向快充，可同时为两台设备充电。"
+  },
+  {
+    "product_id": "P1004",
+    "name": "轻羽 14 轻薄本",
+    "category": "电脑",
+    "price": 4599,
+    "stock": 60,
+    "tags": ["笔记本", "轻薄", "16G", "512G"],
+    "description": "14 英寸 2.8K 屏，16GB 内存 + 512GB 固态硬盘，重量仅 1.2kg。"
+  },
+  {
+    "product_id": "P1005",
+    "name": "青轴 K87 机械键盘",
+    "category": "配件",
+    "price": 299,
+    "stock": 200,
+    "tags": ["机械键盘", "青轴", "87键", "背光"],
+    "description": "87 键紧凑布局，青轴手感清脆，支持白色背光与全键无冲。"
+  },
+  {
+    "product_id": "P1006",
+    "name": "视界 27 英寸 2K 显示器",
+    "category": "电脑",
+    "price": 1099,
+    "stock": 80,
+    "tags": ["显示器", "2K", "27英寸", "护眼"],
+    "description": "27 英寸 2K IPS 屏，75Hz 刷新率，支持低蓝光不闪屏。"
+  },
+  {
+    "product_id": "P1007",
+    "name": "行者 S2 智能手表",
+    "category": "穿戴",
+    "price": 899,
+    "stock": 150,
+    "tags": ["智能手表", "心率", "血氧", "运动"],
+    "description": "1.43 英寸 AMOLED 屏，支持心率、血氧监测与 100+ 运动模式，续航 14 天。"
+  },
+  {
+    "product_id": "P1008",
+    "name": "疾速 65W 氮化镓充电器",
+    "category": "配件",
+    "price": 89,
+    "stock": 500,
+    "tags": ["充电器", "氮化镓", "65W", "便携"],
+    "description": "65W 大功率氮化镓充电器，体积小巧，可给手机、平板、笔记本充电。"
+  },
+  {
+    "product_id": "P1009",
+    "name": "星耀 A3 5G 手机",
+    "category": "手机",
+    "price": 1599,
+    "stock": 260,
+    "tags": ["5G", "长续航", "学生机", "高性价比"],
+    "description": "6.5 英寸护眼屏，6000mAh 大电池，支持 33W 快充，适合日常与学生使用。"
+  }
+]
