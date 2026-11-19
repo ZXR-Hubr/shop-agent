@@ -10,7 +10,10 @@ from contextlib import contextmanager
 from datetime import date, datetime
 from decimal import Decimal
 
-import pymysql
+try:
+    import pymysql
+except ImportError:  # 云端沙箱/未安装驱动时可选依赖：自动回退本地 JSON，不影响服务启动
+    pymysql = None
 
 from .mysql_config import mysql_settings
 
@@ -32,6 +35,8 @@ def get_connection(database: str | None = None):
     """按需建立连接；MySQL 未启用时抛出 RuntimeError 由调用方回退。"""
     if not mysql_settings.enabled:
         raise RuntimeError("MySQL 未启用")
+    if pymysql is None:
+        raise RuntimeError("pymysql 未安装，回退本地 JSON")
     conn = pymysql.connect(
         host=mysql_settings.host,
         port=mysql_settings.port,
