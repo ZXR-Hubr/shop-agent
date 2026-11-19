@@ -19,3 +19,13 @@ class ChatResponse(BaseModel):
     tool_calls: list[ToolCallRecord] = Field(default_factory=list)
     usage: dict = Field(default_factory=dict)
     latency_ms: int = 0
+
+
+class ModeRequest(BaseModel):
+    mode: str = Field(..., pattern="^(mock|api)$")
+
+
+class ModeResponse(BaseModel):
+    mode: str
+    model: str
+    changed: bool = True
