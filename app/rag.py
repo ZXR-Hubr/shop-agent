@@ -11,6 +11,7 @@ from pathlib import Path
 
 import httpx
 
+from . import db
 from .config import BASE_DIR, settings
 
 DIM = 512
@@ -53,8 +54,23 @@ class KnowledgeBase:
     """知识库 + 向量索引。启动时一次性构建，查询时做余弦相似度排序。"""
 
     def __init__(self, path: Path | None = None):
-        path = path or BASE_DIR / "data" / "kb.json"
-        self.docs: list[dict] = json.loads(Path(path).read_text(encoding="utf-8"))
+        # 优先从 MySQL 加载知识库（tags 是逗号分隔字符串，转回列表）
+        rows = db.fetch_all("SELECT id,title,content,tags FROM kb_articles ORDER BY id")
+        if rows:
+            self.docs = [
+                {
+                    "id": r["id"],
+                    "title": r["title"],
+                    "content": r["content"],
+                    "tags": [t for t in (r.get("tags") or "").split(",") if t],
+                }
+                for r in rows
+            ]
+            self.source = "mysql"
+        else:
+            path = path or BASE_DIR / "data" / "kb.json"
+            self.docs = json.loads(Path(path).read_text(encoding="utf-8"))
+            self.source = "json"
         texts = [f"{doc['title']}\n{doc['content']}" for doc in self.docs]
         self.vectors, self.mode = embed_texts(texts)
 
