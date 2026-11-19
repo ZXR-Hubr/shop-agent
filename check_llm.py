@@ -43,6 +43,14 @@ def _show_settings() -> bool:
     print(f"   LLM_MODEL      : {settings.llm_model}")
     print(f"   LLM_API_KEY    : {_mask(settings.llm_api_key)}")
     print(f"   运行模式       : {'Mock（假数据）' if settings.llm_mock else '真实 LLM'}")
+    key = settings.llm_api_key
+    if key.startswith(("ghp_", "github_pat_", "gho_", "ghu_")):
+        print()
+        print(f"{BAD} 你填的是 GitHub 令牌（ghp_ 开头），不是阿里云百炼的 API Key。")
+        print("     GitHub 令牌只用来上传代码；调用大模型要用百炼的 sk- Key。")
+        print("     获取：https://bailian.console.aliyun.com 右上角 API-KEY")
+        print("     修复：双击 配置阿里云.bat 重新填（会保留你现在的接口和模型）。")
+        return False
     if settings.llm_mock:
         print()
         print(f"{BAD} 没有读到 Key，当前是 Mock 模式。")
@@ -64,7 +72,7 @@ async def _check_models() -> bool:
     except httpx.HTTPError as exc:
         print(f"{BAD} 请求失败：{type(exc).__name__}: {exc}")
         print("     常见原因：断网、需要代理、Base URL 写错。")
-        print("     阿里云的 Base URL 必须是 https://dashscope.aliyuncs.com/compatible-mode/v1")
+        print(f"     当前 Base URL：{settings.llm_base_url}")
         return False
 
     if resp.status_code == 401:
@@ -77,7 +85,8 @@ async def _check_models() -> bool:
         print("     去 https://bailian.console.aliyun.com 开通并确认余额。")
         return False
     if resp.status_code == 404:
-        print(f"{BAD} 404：Base URL 不对，应为 https://dashscope.aliyuncs.com/compatible-mode/v1")
+        print(f"{BAD} 404：Base URL 或模型名不对。当前 Base URL：{settings.llm_base_url}")
+        print(f"     当前模型：{settings.llm_model}；请确认该接口是否提供这个模型。")
         print(f"     返回：{resp.text[:200]}")
         return False
     if resp.status_code >= 400:
