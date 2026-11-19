@@ -69,6 +69,16 @@
     font-size: 12px; padding: 7px 12px; border-radius: 9px; cursor: pointer;
   }
   .ghost-btn:hover { background: #f8fafc; }
+  .mode-toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid var(--line); background: #fff; color: var(--text);
+    font-size: 12px; font-weight: 600; padding: 6px 11px; border-radius: 9px;
+    cursor: pointer; transition: background 0.15s, border-color 0.15s;
+  }
+  .mode-toggle:hover { background: #f8fafc; }
+  .mode-toggle.mock { border-color: #fcd34d; background: #fffbeb; color: #b45309; }
+  .mode-toggle.api { border-color: #86efac; background: #f0fdf4; color: #15803d; }
+  .mode-toggle:disabled { opacity: 0.6; cursor: wait; }
   main {
     flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px;
     scroll-behavior: smooth;
@@ -149,6 +159,7 @@
       </div>
     </div>
     <div class="actions">
+      <button class="mode-toggle" id="modeToggle" title="点击切换 Mock / API 模式">加载中…</button>
       <label class="switch"><input type="checkbox" id="traceToggle" /> 显示工具调用</label>
       <button class="ghost-btn" id="resetBtn">新会话</button>
     </div>
@@ -173,12 +184,14 @@
   const sendBtn = document.getElementById('sendBtn');
   const resetBtn = document.getElementById('resetBtn');
   const traceToggle = document.getElementById('traceToggle');
+  const modeToggle = document.getElementById('modeToggle');
   const statusText = document.getElementById('statusText');
   const statusDot = document.getElementById('statusDot');
   const chipsEl = document.getElementById('chips');
 
   let sessionId = localStorage.getItem('xiaoman_sid') || null;
   let busy = false;
+  let currentMode = null;
 
   const CHIPS = [
     '有没有降噪耳机推荐？',
@@ -189,23 +202,56 @@
     '可以开发票吗？'
   ];
 
+  function renderMode(mode, model) {
+    currentMode = mode;
+    if (mode === 'mock') {
+      modeToggle.className = 'mode-toggle mock';
+      modeToggle.textContent = '⚙ Mock 模式 · 点击切 API';
+      statusDot.className = 'dot mock';
+      statusText.textContent = 'Mock 模式（本地假数据，免费，流程完整）';
+    } else {
+      modeToggle.className = 'mode-toggle api';
+      modeToggle.textContent = '⚡ API 模式 · 点击切 Mock';
+      statusDot.className = 'dot online';
+      statusText.textContent = '在线 · ' + (model || 'LLM') + ' · 真实模型';
+    }
+  }
+
   function setStatus() {
     fetch('/api/health')
       .then((res) => res.json())
-      .then((data) => {
-        if (data.mode === 'mock') {
-          statusDot.className = 'dot mock';
-          statusText.textContent = 'Mock 模式（未配置 API Key，流程完整可体验）';
-        } else {
-          statusDot.className = 'dot online';
-          statusText.textContent = '在线 · ' + data.model + ' · 向量库 ' + data.vector_backend;
-        }
-      })
+      .then((data) => renderMode(data.mode, data.model))
       .catch(() => {
         statusDot.className = 'dot';
         statusText.textContent = '服务未连接';
+        modeToggle.textContent = '模式未知';
       });
   }
+
+  modeToggle.addEventListener('click', async () => {
+    if (busy || !currentMode) return;
+    const next = currentMode === 'mock' ? 'api' : 'mock';
+    modeToggle.disabled = true;
+    modeToggle.textContent = '切换中…';
+    try {
+      const res = await fetch('/api/mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: next })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || ('HTTP ' + res.status));
+      renderMode(data.mode, data.model);
+      addMessage('assistant', next === 'api'
+        ? '已切换到 API 模式，接下来会调用真实大模型（对话会计费）。'
+        : '已切换到 Mock 模式，接下来使用本地假数据回答，不产生费用。');
+    } catch (err) {
+      modeToggle.textContent = currentMode === 'mock' ? '⚙ Mock 模式 · 点击切 API' : '⚡ API 模式 · 点击切 Mock';
+      addMessage('assistant', '模式切换失败：' + err.message);
+    } finally {
+      modeToggle.disabled = false;
+    }
+  });
 
   function scrollToBottom() {
     messagesEl.scrollTop = messagesEl.scrollHeight;
