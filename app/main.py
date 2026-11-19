@@ -8,9 +8,10 @@ from fastapi.staticfiles import StaticFiles
 
 from .agent import Agent
 from .config import BASE_DIR, settings
+from . import db, runtime
 from .llm import LLMClient
 from .memory import SessionStore
-from .schemas import ChatRequest, ChatResponse
+from .schemas import ChatRequest, ChatResponse, ModeRequest, ModeResponse
 from .tools import KB
 
 app = FastAPI(
@@ -38,10 +39,12 @@ async def index():
 async def health():
     return {
         "status": "ok",
-        "mode": "mock" if settings.llm_mock else "api",
-        "model": "mock" if settings.llm_mock else settings.llm_model,
+        "mode": runtime.get_mode(),
+        "model": "mock" if runtime.is_mock() else settings.llm_model,
         "vector_backend": KB.mode,
         "kb_size": len(KB.docs),
+        "data_source": "mysql" if KB.source == "mysql" else "json",
+        "mysql_connected": db.ping(),
     }
 
 
@@ -64,3 +67,27 @@ async def chat(request: ChatRequest):
 async def reset_session(session_id: str):
     await memory.clear(session_id)
     return {"ok": True, "session_id": session_id}
+
+
+@app.get("/api/mode", response_model=ModeResponse)
+async def get_mode():
+    mode = runtime.get_mode()
+    return ModeResponse(
+        mode=mode,
+        model="mock" if mode == "mock" else settings.llm_model,
+        changed=False,
+    )
+
+
+@app.post("/api/mode", response_model=ModeResponse)
+async def switch_mode(request: ModeRequest):
+    try:
+        mode = runtime.set_mode(request.mode)
+    except ValueError as exc:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=str(exc))
+    return ModeResponse(
+        mode=mode,
+        model="mock" if mode == "mock" else settings.llm_model,
+        changed=True,
+    )
