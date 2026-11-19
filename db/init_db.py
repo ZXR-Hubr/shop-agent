@@ -78,6 +78,9 @@ def main():
                     logistics    VARCHAR(128) NOT NULL DEFAULT '' COMMENT '物流信息',
                     created_at   VARCHAR(32)  NOT NULL COMMENT '下单时间',
                     address      VARCHAR(255) NOT NULL DEFAULT '' COMMENT '收货地址',
+                    receiver     VARCHAR(32)  NOT NULL DEFAULT '' COMMENT '收货人',
+                    phone        VARCHAR(32)  NOT NULL DEFAULT '' COMMENT '联系电话(脱敏)',
+                    quantity     INT          NOT NULL DEFAULT 1 COMMENT '购买数量',
                     INDEX idx_status (status)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单表'
             """)
@@ -97,7 +100,9 @@ def main():
                     order_id     VARCHAR(32) NOT NULL COMMENT '订单号',
                     product_name VARCHAR(128) NOT NULL COMMENT '商品名称',
                     reason       VARCHAR(255) NOT NULL DEFAULT '' COMMENT '售后原因',
+                    type         VARCHAR(16)  NOT NULL DEFAULT '退货' COMMENT '售后类型:退货/换货/维修',
                     status       VARCHAR(32) NOT NULL DEFAULT '待审核' COMMENT '工单状态',
+                    amount       DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '退款/换货金额(元)',
                     created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
                     INDEX idx_order (order_id)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='售后工单表'
@@ -120,11 +125,12 @@ def main():
             # 导入订单
             orders = _load_json("orders.json")
             cur.executemany(
-                "INSERT INTO orders (order_id,product_id,product_name,status,amount,logistics,created_at,address) "
-                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+                "INSERT INTO orders (order_id,product_id,product_name,status,amount,logistics,created_at,address,receiver,phone,quantity) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                 [
                     (o["order_id"], o["product_id"], o["product_name"], o["status"],
-                     o["amount"], o["logistics"], o["created_at"], o["address"])
+                     o["amount"], o["logistics"], o["created_at"], o["address"],
+                     o.get("receiver", ""), o.get("phone", ""), o.get("quantity", 1))
                     for o in orders
                 ],
             )
@@ -137,6 +143,20 @@ def main():
                 [(d["id"], d["title"], d["content"], ",".join(d.get("tags", []))) for d in kb],
             )
             print(f"[导入] kb        {len(kb)} 行")
+
+            # 导入售后工单（退货 / 换货 / 维修）
+            after_sales = _load_json("after_sales.json")
+            cur.executemany(
+                "INSERT INTO after_sales_tickets (ticket_id,order_id,product_name,type,reason,status,amount,created_at) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+                [
+                    (a["ticket_id"], a["order_id"], a["product_name"], a.get("type", "退货"),
+                     a.get("reason", ""), a.get("status", "待审核"), a.get("amount", 0),
+                     a.get("created_at"))
+                    for a in after_sales
+                ],
+            )
+            print(f"[导入] after_sales {len(after_sales)} 行")
 
             # 行数核验
             print("\n[核验] 各表行数：")
