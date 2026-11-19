@@ -10,13 +10,14 @@ import re
 import httpx
 
 from .config import settings
+from .runtime import is_mock
 
 ORDER_RE = re.compile(r"[A-Za-z]{2}\d{6,}")
 
 
 class LLMClient:
     async def chat(self, messages: list[dict], tools: list[dict] | None = None) -> dict:
-        if settings.llm_mock:
+        if is_mock():
             return _mock_chat(messages)
 
         payload = {
