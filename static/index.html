@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>小满商城 · 智能客服 Agent</title>
+<style>
+  :root {
+    --bg: #f4f7fb;
+    --card: #ffffff;
+    --line: #e5eaf3;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --brand: #2563eb;
+    --brand-soft: #e8f0fe;
+    --assistant-bubble: #f6f8fc;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    padding: 18px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: radial-gradient(circle at 12% 8%, #e9f0ff 0, transparent 42%), var(--bg);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .app {
+    width: min(880px, 100%);
+    height: min(880px, 100%);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    box-shadow: 0 16px 48px rgba(15, 23, 42, 0.08);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+    background: #fff;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .logo {
+    width: 42px; height: 42px; border-radius: 13px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: #fff; font-weight: 700; font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    flex: 0 0 auto;
+  }
+  .brand h1 { margin: 0; font-size: 16px; font-weight: 650; letter-spacing: 0.2px; }
+  .brand p { margin: 2px 0 0; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #94a3b8; }
+  .dot.online { background: #22c55e; }
+  .dot.mock { background: #f59e0b; }
+  .actions { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+  .switch { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
+  .switch input { accent-color: var(--brand); }
+  .ghost-btn {
+    border: 1px solid var(--line); background: #fff; color: var(--text);
+    font-size: 12px; padding: 7px 12px; border-radius: 9px; cursor: pointer;
+  }
+  .ghost-btn:hover { background: #f8fafc; }
+  main {
+    flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px;
+    scroll-behavior: smooth;
+  }
+  .msg { display: flex; gap: 10px; align-items: flex-start; max-width: 92%; }
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 9px; flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600;
+    background: var(--brand-soft); color: var(--brand);
+  }
+  .msg.user .avatar { background: #1f2937; color: #fff; }
+  .bubble {
+    background: var(--assistant-bubble);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 11px 14px;
+    font-size: 14px; line-height: 1.7;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .msg.user .bubble { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .trace { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 8px; }
+  .trace summary { cursor: pointer; font-size: 12px; color: var(--muted); outline: none; }
+  .trace pre {
+    margin: 8px 0 0; padding: 10px; border-radius: 9px;
+    background: #0f172a; color: #d7e3f4;
+    font-size: 11.5px; line-height: 1.55; overflow: auto; max-height: 240px;
+  }
+  .typing { display: inline-flex; gap: 4px; align-items: center; min-height: 20px; }
+  .typing span {
+    width: 6px; height: 6px; border-radius: 50%; background: #94a3b8;
+    animation: blink 1.2s infinite ease-in-out;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.15s; }
+  .typing span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes blink { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 20px 10px; }
+  .chip {
+    border: 1px solid var(--line); background: #fff; color: #334155;
+    font-size: 12px; padding: 7px 11px; border-radius: 999px; cursor: pointer;
+  }
+  .chip:hover { border-color: #bfd3ff; background: #f5f9ff; color: var(--brand); }
+  footer { border-top: 1px solid var(--line); padding: 14px 18px; background: #fff; }
+  .input-row {
+    display: flex; gap: 10px; align-items: flex-end;
+    border: 1px solid var(--line); border-radius: 14px; padding: 8px 8px 8px 12px;
+    background: #fff; transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .input-row:focus-within { border-color: #93b4ff; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+  textarea {
+    flex: 1; border: 0; outline: 0; resize: none;
+    font: inherit; font-size: 14px; line-height: 1.5; color: var(--text);
+    background: transparent; max-height: 120px; padding: 6px 0;
+  }
+  #sendBtn {
+    border: 0; border-radius: 10px; background: var(--brand); color: #fff;
+    font-size: 14px; font-weight: 600; padding: 9px 18px; cursor: pointer;
+    flex: 0 0 auto;
+  }
+  #sendBtn:disabled { background: #a9c1f7; cursor: not-allowed; }
+  .hint { margin: 8px 2px 0; font-size: 11px; color: #9aa4b2; }
+  @media (max-width: 560px) {
+    body { padding: 0; }
+    .app { height: 100%; border-radius: 0; border: 0; }
+    .switch { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">满</div>
+      <div>
+        <h1>小满商城 · 智能客服</h1>
+        <p><span class="dot" id="statusDot"></span><span id="statusText">正在连接服务…</span></p>
+      </div>
+    </div>
+    <div class="actions">
+      <label class="switch"><input type="checkbox" id="traceToggle" /> 显示工具调用</label>
+      <button class="ghost-btn" id="resetBtn">新会话</button>
+    </div>
+  </header>
+
+  <main id="messages"></main>
+
+  <div class="chips" id="chips"></div>
+
+  <footer>
+    <div class="input-row">
+      <textarea id="input" rows="1" placeholder="请输入您的问题，例如：订单 SO20261114002 到哪了"></textarea>
+      <button id="sendBtn">发送</button>
+    </div>
+    <p class="hint">Enter 发送，Shift + Enter 换行 · 数据均为演示用 Mock 数据</p>
+  </footer>
+</div>
+
+<script>
+  const messagesEl = document.getElementById('messages');
+  const inputEl = document.getElementById('input');
+  const sendBtn = document.getElementById('sendBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const traceToggle = document.getElementById('traceToggle');
+  const statusText = document.getElementById('statusText');
+  const statusDot = document.getElementById('statusDot');
+  const chipsEl = document.getElementById('chips');
+
+  let sessionId = localStorage.getItem('xiaoman_sid') || null;
+  let busy = false;
+
+  const CHIPS = [
+    '有没有降噪耳机推荐？',
+    '2000 元以内的手机有哪些？',
+    '订单 SO20261114002 到哪了',
+    '订单 SO20261112001 耳机有杂音，想退货',
+    '你们满多少包邮？',
+    '可以开发票吗？'
+  ];
+
+  function setStatus() {
+    fetch('/api/health')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.mode === 'mock') {
+          statusDot.className = 'dot mock';
+          statusText.textContent = 'Mock 模式（未配置 API Key，流程完整可体验）';
+        } else {
+          statusDot.className = 'dot online';
+          statusText.textContent = '在线 · ' + data.model + ' · 向量库 ' + data.vector_backend;
+        }
+      })
+      .catch(() => {
+        statusDot.className = 'dot';
+        statusText.textContent = '服务未连接';
+      });
+  }
+
+  function scrollToBottom() {
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function addMessage(role, text, trace) {
+    const wrap = document.createElement('div');
+    wrap.className = 'msg ' + role;
+
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.textContent = role === 'user' ? '我' : '满';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    const body = document.createElement('div');
+    body.textContent = text;
+    bubble.appendChild(body);
+
+    if (role === 'assistant' && trace && trace.length && traceToggle.checked) {
+      const details = document.createElement('details');
+      details.className = 'trace';
+      const summary = document.createElement('summary');
+      summary.textContent = '工具调用（' + trace.length + '）';
+      details.appendChild(summary);
+      trace.forEach((item) => {
+        const pre = document.createElement('pre');
+        pre.textContent = item.name + '(' + JSON.stringify(item.arguments) + ')\n' + JSON.stringify(item.result, null, 2);
+        details.appendChild(pre);
+      });
+      bubble.appendChild(details);
+    }
+
+    wrap.appendChild(avatar);
+    wrap.appendChild(bubble);
+    messagesEl.appendChild(wrap);
+    scrollToBottom();
+  }
+
+  function addTyping() {
+    const wrap = document.createElement('div');
+    wrap.className = 'msg assistant';
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.textContent = '满';
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble typing';
+    bubble.innerHTML = '<span></span><span></span><span></span>';
+    wrap.appendChild(avatar);
+    wrap.appendChild(bubble);
+    messagesEl.appendChild(wrap);
+    scrollToBottom();
+    return wrap;
+  }
+
+  async function send(text) {
+    if (busy) return;
+    const content = (text !== undefined ? text : inputEl.value).trim();
+    if (!content) return;
+
+    busy = true;
+    sendBtn.disabled = true;
+    inputEl.value = '';
+    autoGrow();
+    addMessage('user', content);
+    const typing = addTyping();
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId, message: content })
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      sessionId = data.session_id;
+      localStorage.setItem('xiaoman_sid', sessionId);
+      typing.remove();
+      addMessage('assistant', data.reply, data.tool_calls);
+    } catch (err) {
+      typing.remove();
+      addMessage('assistant', '抱歉，服务暂时不可用，请稍后再试。（' + err.message + '）');
+    } finally {
+      busy = false;
+      sendBtn.disabled = false;
+      inputEl.focus();
+    }
+  }
+
+  function autoGrow() {
+    inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
+  }
+
+  sendBtn.addEventListener('click', () => send());
+  inputEl.addEventListener('input', autoGrow);
+  inputEl.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      send();
+    }
+  });
+
+  resetBtn.addEventListener('click', async () => {
+    if (sessionId) {
+      fetch('/api/session/' + sessionId + '/reset', { method: 'POST' }).catch(() => {});
+    }
+    sessionId = null;
+    localStorage.removeItem('xiaoman_sid');
+    messagesEl.innerHTML = '';
+    addMessage('assistant', '新会话已开始，我是小满，有什么可以帮您？');
+  });
+
+  traceToggle.addEventListener('change', () => {
+    if (traceToggle.checked && messagesEl.children.length === 0) {
+      addMessage('assistant', '已开启工具调用展示，之后的回答会附上底层工具调用记录。');
+    }
+  });
+
+  CHIPS.forEach((text) => {
+    const chip = document.createElement('button');
+    chip.className = 'chip';
+    chip.type = 'button';
+    chip.textContent = text;
+    chip.addEventListener('click', () => send(text));
+    chipsEl.appendChild(chip);
+  });
+
+  setStatus();
+  addMessage('assistant', '您好，我是小满商城的智能客服小满～可以帮您查商品、查订单，或办理退换货等售后问题。');
+</script>
+</body>
+</html>
