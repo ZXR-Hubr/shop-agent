@@ -6,8 +6,9 @@ TOOLS 是对外的 JSON Schema，TOOL_IMPL 是真正执行逻辑的映射表。
 import json
 import re
 import uuid
-from pathlib import Path
+from datetime import datetime
 
+from . import db
 from .config import BASE_DIR
 from .rag import KnowledgeBase
 
@@ -16,9 +17,14 @@ def _load_json(name: str):
     return json.loads((BASE_DIR / "data" / name).read_text(encoding="utf-8"))
 
 
+# JSON 作为回退数据源：MySQL 未启用或连接失败时仍可完整演示
 PRODUCTS: list[dict] = _load_json("products.json")
 ORDERS: dict[str, dict] = {o["order_id"]: o for o in _load_json("orders.json")}
 TICKETS: dict[str, dict] = {}
+
+
+def _tags_to_list(raw: str) -> list[str]:
+    return [t for t in (raw or "").split(",") if t]
 KB = KnowledgeBase()
 
 
@@ -34,7 +40,7 @@ def _product_tokens(product: dict) -> set[str]:
 
 
 def search_products(query: str = "", category: str = "", max_price: float | None = None) -> dict:
-    """按关键词 / 类目 / 价格上限检索商品。"""
+    """按关键词 / 类目 / 价格上限检索商品。数据源：MySQL 优先，回退 JSON。"""
     q = (query or "").strip().lower()
 
     if max_price is None:
@@ -42,8 +48,17 @@ def search_products(query: str = "", category: str = "", max_price: float | None
         if match:
             max_price = float(match.group(1))
 
+    # MySQL：用 SQL 做类目 / 价格过滤，关键词在结果上打分排序
+    rows = db.fetch_all("SELECT * FROM products")
+    if rows is not None:
+        for p in rows:
+            p["tags"] = _tags_to_list(p.get("tags", ""))
+        source = rows
+    else:
+        source = PRODUCTS
+
     hits: list[tuple[int, dict]] = []
-    for product in PRODUCTS:
+    for product in source:
         if category and category not in product["category"]:
             continue
         if max_price is not None and product["price"] > max_price:
@@ -67,36 +82,63 @@ def search_products(query: str = "", category: str = "", max_price: float | None
     ]
     if not items:
         return {"count": 0, "items": [], "message": "没有找到符合条件的商品"}
-    return {"count": len(items), "items": items}
+    return {"count": len(items), "items": items, "source": "mysql" if rows is not None else "json"}
 
 
 def get_order(order_id: str) -> dict:
-    """按订单号查询订单状态、物流与金额。"""
+    """按订单号查询订单状态、物流与金额。数据源：MySQL 优先，回退 JSON。"""
     oid = (order_id or "").strip().upper()
-    order = ORDERS.get(oid)
-    if not order:
-        return {"found": False, "message": f"未找到订单 {oid}，请核对订单号是否正确"}
-    return {"found": True, **order}
+
+    row = db.fetch_one("SELECT * FROM orders WHERE order_id = %s", (oid,))
+    if row is not None and row:
+        return {"found": True, **row, "source": "mysql"}
+    if row is None:  # MySQL 不可用，回退本地
+        order = ORDERS.get(oid)
+        if order:
+            return {"found": True, **order, "source": "json"}
+
+    return {"found": False, "message": f"未找到订单 {oid}，请核对订单号是否正确"}
 
 
 def create_after_sales(order_id: str, reason: str = "") -> dict:
-    """为订单创建退货 / 换货 / 维修售后工单。"""
+    """为订单创建退货 / 换货 / 维修售后工单。写入 MySQL，失败回退内存。"""
     oid = (order_id or "").strip().upper()
-    order = ORDERS.get(oid)
-    if not order:
+
+    # 先确认订单存在（MySQL 优先）
+    order_row = db.fetch_one("SELECT product_name FROM orders WHERE order_id = %s", (oid,))
+    if order_row:
+        product_name = order_row["product_name"]
+    elif order_row is None:
+        local = ORDERS.get(oid)
+        if not local:
+            return {"success": False, "message": f"未找到订单 {oid}，无法创建售后工单"}
+        product_name = local["product_name"]
+    else:
         return {"success": False, "message": f"未找到订单 {oid}，无法创建售后工单"}
+
     ticket_id = f"AS{uuid.uuid4().hex[:8].upper()}"
     ticket = {
         "ticket_id": ticket_id,
         "order_id": oid,
-        "product_name": order["product_name"],
+        "product_name": product_name,
         "reason": reason or "用户未填写",
         "status": "待审核",
     }
-    TICKETS[ticket_id] = ticket
+
+    # 写 MySQL；返回 None 表示未启用或失败，此时回退到内存字典
+    affected = db.execute(
+        "INSERT INTO after_sales_tickets (ticket_id,order_id,product_name,reason,status) "
+        "VALUES (%s,%s,%s,%s,%s)",
+        (ticket_id, oid, product_name, ticket["reason"], "待审核"),
+    )
+    storage = "mysql" if affected else "memory"
+    if not affected:
+        TICKETS[ticket_id] = ticket
+
     return {
         "success": True,
         **ticket,
+        "storage": storage,
         "next_steps": "请在 24 小时内按短信指引寄回商品，我们收到检测后 1-3 个工作日内处理退款或换货。",
     }
 
