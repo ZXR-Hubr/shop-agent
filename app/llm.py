@@ -76,7 +76,10 @@ def _mock_chat(messages: list[dict]) -> dict:
     match = ORDER_RE.search(user)
     order_id = match.group(0).upper() if match else ""
 
-    if order_id and any(word in user for word in ["退", "换", "售后", "维修", "坏", "杂音"]):
+    if order_id and any(word in user for word in ["进度", "售后单", "退到哪", "换到哪", "工单", "处理到"]):
+        # 查询已有退货 / 换货 / 维修工单的进度
+        name, arguments = "get_after_sales", {"order_id": order_id}
+    elif order_id and any(word in user for word in ["申请退", "我要退", "想退", "申请换", "要换货", "维修", "坏", "杂音"]):
         name, arguments = "create_after_sales", {"order_id": order_id, "reason": user}
     elif order_id and any(word in user for word in ["订单", "物流", "到哪", "发货", "状态", "什么时候", "查"]):
         name, arguments = "get_order", {"order_id": order_id}
@@ -127,7 +130,18 @@ def _mock_final(raw: str) -> str:
 
     if "items" in data:
         items = data.get("items") or []
+        # 售后工单结果：每项带 ticket_id
+        if items and "ticket_id" in items[0]:
+            lines = [
+                f"- 工单 {t['ticket_id']}（订单 {t.get('order_id', '')}，{t.get('type', '售后')}）："
+                f"{t.get('product_name', '')}，状态「{t.get('status', '')}」"
+                + (f"，金额 ¥{t.get('amount', 0)}" if t.get('amount') else "")
+                for t in items[:5]
+            ]
+            return "为您查到以下售后工单：\n" + "\n".join(lines)
         if not items:
+            if data.get("message"):
+                return data["message"]
             return "暂时没有找到完全匹配的商品，您可以告诉我预算和用途，我再帮您筛选。"
         lines = [
             f"- {item['name']}（¥{item['price']}，库存 {item['stock']}）：{item.get('description', '')}"
