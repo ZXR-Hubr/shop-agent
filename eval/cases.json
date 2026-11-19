@@ -1,0 +1,62 @@
+[
+  {
+    "id": "E01",
+    "message": "有没有降噪耳机推荐？",
+    "expect_tool": "search_products",
+    "expect_keywords": ["耳机"]
+  },
+  {
+    "id": "E02",
+    "message": "2000 元以内的手机有哪些？",
+    "expect_tool": "search_products",
+    "expect_keywords": ["手机"]
+  },
+  {
+    "id": "E03",
+    "message": "帮我查一下订单 SO20261114002 到哪了",
+    "expect_tool": "get_order",
+    "expect_keywords": ["运输中"]
+  },
+  {
+    "id": "E04",
+    "message": "订单 SO20261112001 的耳机有杂音，我想退货",
+    "expect_tool": "create_after_sales",
+    "expect_keywords": ["工单"]
+  },
+  {
+    "id": "E05",
+    "message": "你们满多少包邮？",
+    "expect_tool": "search_faq",
+    "expect_keywords": ["包邮"]
+  },
+  {
+    "id": "E06",
+    "message": "可以开发票吗？",
+    "expect_tool": "search_faq",
+    "expect_keywords": ["发票"]
+  },
+  {
+    "id": "E07",
+    "message": "耳机保修多久？",
+    "expect_tool": "search_faq",
+    "expect_keywords": ["保修"]
+  },
+  {
+    "id": "E08",
+    "message": "优惠券怎么叠加使用？",
+    "expect_tool": "search_faq",
+    "expect_keywords": ["优惠券"]
+  },
+  {
+    "id": "E09",
+    "message": "你好",
+    "expect_tool": null,
+    "expect_keywords": ["小满"]
+  },
+  {
+    "id": "E10",
+    "message": "订单 SO20261115003 什么时候发货？",
+    "expect_tool": "get_order",
+    "expect_keywords": ["待发货"]
+  }
+]
