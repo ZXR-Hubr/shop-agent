@@ -1,0 +1,52 @@
+[
+  {
+    "order_id": "SO20261112001",
+    "product_id": "P1002",
+    "product_name": "声阔 Air Pro 降噪耳机",
+    "status": "已签收",
+    "amount": 599,
+    "logistics": "顺丰速运 SF1234567890",
+    "created_at": "2026-11-12 10:21",
+    "address": "河南省郑州市金水区"
+  },
+  {
+    "order_id": "SO20261114002",
+    "product_id": "P1001",
+    "product_name": "星耀 X1 5G 手机",
+    "status": "运输中",
+    "amount": 3299,
+    "logistics": "京东物流 JD9988776655",
+    "created_at": "2026-11-14 09:05",
+    "address": "河南省郑州市中原区"
+  },
+  {
+    "order_id": "SO20261115003",
+    "product_id": "P1004",
+    "product_name": "轻羽 14 轻薄本",
+    "status": "待发货",
+    "amount": 4599,
+    "logistics": "仓库拣货中",
+    "created_at": "2026-11-15 20:42",
+    "address": "河南省洛阳市涧西区"
+  },
+  {
+    "order_id": "SO20261110004",
+    "product_id": "P1007",
+    "product_name": "行者 S2 智能手表",
+    "status": "已签收",
+    "amount": 899,
+    "logistics": "中通快递 ZT5566778899",
+    "created_at": "2026-11-10 14:18",
+    "address": "河南省开封市龙亭区"
+  },
+  {
+    "order_id": "SO20261116005",
+    "product_id": "P1003",
+    "product_name": "迅充 20000mAh 充电宝",
+    "status": "待发货",
+    "amount": 129,
+    "logistics": "仓库拣货中",
+    "created_at": "2026-11-16 11:33",
+    "address": "河南省郑州市二七区"
+  }
+]
