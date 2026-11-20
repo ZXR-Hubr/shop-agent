@@ -29,3 +29,19 @@ class ModeResponse(BaseModel):
     mode: str
     model: str
     changed: bool = True
+
+
+class EvalCaseRequest(BaseModel):
+    """从对话界面保存一条测试用例。"""
+    message: str = Field(..., min_length=1, max_length=2000)
+    expect_tool: str | None = None
+    expect_keywords: list[str] = Field(default_factory=list)
+    category: str = "功能"
+    note: str = ""
+
+
+class EvalCaseResponse(BaseModel):
+    ok: bool
+    id: str
+    total: int
+    path: str
