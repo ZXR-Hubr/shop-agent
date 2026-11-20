@@ -37,17 +37,23 @@
 | 可量化的 LLM Evaluation 评估标准 | `eval/cases.json` **35 条**测试用例（功能/边界/多轮/拒答/越权）+ `eval/run_eval.py` 5 个指标 |
 | 对话即用例：界面沉淀测试用例 | `POST /api/eval/cases` + 前端每条回复「存为测试用例」按钮 |
 | 输入安全护栏（Guardrail） | `app/guard.py`：拦截提示注入 / 套取系统提示 / 越权查单，命中不调工具 |
-| 单元测试与持续迭代 | `tests/` 下 19 个 pytest 用例 |
+| 单元测试与持续迭代 | `tests/` 下 24 个 pytest 用例（含多实现验证） |
 
 ---
 
 ## 2. 技术栈
 
-- 后端：Python 3.10+、FastAPI、Pydantic、httpx（直接请求 OpenAI 兼容接口）
+- 后端：Python 3.10+，**FastAPI 主入口 + Flask 备选入口**（`flask_app.py`，同一套业务层，接口层可替换）
+- Agent 编排：**手写 Function Calling 循环（默认）+ LangChain AgentExecutor（`AGENT_FRAMEWORK=langchain`）**
 - 前端：原生 HTML + CSS + JavaScript（无需构建工具）
 - 测试：pytest
 - 数据库：MySQL 8.0（PyMySQL 驱动）——商品 / 订单 / 售后工单 / 知识库
-- 存储：默认进程内内存 / 本地向量库；可选 Redis、远程 Embedding API；MySQL 不可用时自动回退到本地 JSON
+- 向量库：**local / pgvector / Milvus 三套实现（`VECTOR_BACKEND` 切换，接口一致）**
+- 存储：**Redis 会话缓存（`REDIS_URL`）+ 本地内存双实现**；远程 Embedding API；均带自动降级
+- 降级设计：任一可选组件（Redis / pgvector / Milvus / LangChain / MySQL）缺失或连接失败，自动回退默认实现，Demo 永远可跑
+
+> **同类技术多实现**是本项目的刻意设计：FastAPI/Flask、native/LangChain、
+> local/pgvector/Milvus、内存/Redis 都是「同一接口、可配置切换」，方便对比取舍，也保证零依赖可演示。
 
 ---
 
@@ -56,12 +62,17 @@
 ```
 shop-agent/
 ├─ app/
-│  ├─ main.py          # FastAPI 入口：页面 + 三个接口
-│  ├─ agent.py         # Agent 核心：多轮对话 + 工具调用循环
+│  ├─ main.py          # FastAPI 入口：页面 + 接口 + 用例沉淀
+│  ├─ flask_app.py     # Flask 备选入口（8001 端口，同一套业务层）
+│  ├─ agent.py         # Agent 核心：手写多轮对话 + 工具调用循环
+│  ├─ agent_factory.py # Agent 工厂：native / langchain 切换
+│  ├─ langchain_agent.py # LangChain AgentExecutor 实现
 │  ├─ llm.py           # LLM 客户端（OpenAI 兼容）+ Mock 实现
-│  ├─ tools.py         # 4 个工具的实现与 JSON Schema
-│  ├─ rag.py           # 知识库向量化与检索
-│  ├─ memory.py        # 会话记忆（内存 / Redis）
+│  ├─ tools.py         # 5 个工具的实现与 JSON Schema
+│  ├─ rag.py           # 知识库向量化 + 检索（委托给向量后端）
+│  ├─ vectorstore.py   # 向量存储三实现：local / pgvector / milvus
+│  ├─ memory.py        # 会话记忆（内存 / Redis 双实现）
+│  ├─ guard.py         # 安全护栏：注入 / 越权拦截
 │  ├─ db.py            # MySQL 数据访问层（带 JSON 回退）
 │  ├─ mysql_config.py  # MySQL 连接配置
 │  ├─ config.py        # 环境变量配置
@@ -77,7 +88,7 @@ shop-agent/
 │  ├─ cases.json       # 评测用例
 │  ├─ run_eval.py      # 评测脚本
 │  └─ report.json      # 运行后生成
-├─ tests/              # 19 个单元测试
+├─ tests/              # 24 个单元测试（含多实现验证）
 ├─ docs/开发者讲解.md   # 面试讲解手册
 ├─ check_llm.py        # 阿里云百炼连通性 / 工具调用自检
 ├─ setup_key.py        # 交互式写入 .env（配置阿里云.bat 调用它）
@@ -166,7 +177,7 @@ cd E:\shop-agent
 
 ```bash
 cd E:\shop-agent
-.venv\Scripts\python.exe -m pytest -q      # 19 个单元测试
+.venv\Scripts\python.exe -m pytest -q      # 24 个单元测试
 .venv\Scripts\python.exe eval/run_eval.py  # 35 条评测用例，结果写入 eval/report.json
 ```
 
@@ -306,11 +317,19 @@ Agent 把 user / assistant 消息写回 memory
 1. **知识库**：`data/kb.json`，12 条客服规则（退换货、运费、发票、保修、优惠券等）。
 2. **向量化**：默认使用内置的**字符二元组哈希向量**（512 维，L2 归一化），零依赖、离线可用；
    配置 `EMBED_MODEL` 后自动改用远程 Embedding API，失败时静默回退。
-3. **检索**：查询向量与每条文档向量做余弦相似度，取 Top-3。
+3. **向量存储三方案（`app/vectorstore.py`，统一 `upsert/search` 接口）**：
+
+   | 后端 | 配置 `VECTOR_BACKEND` | 检索实现 | 依赖 |
+   |---|---|---|---|
+   | local（默认） | `local` | 内存 list + 余弦 | 零依赖，开箱即跑 |
+   | pgvector | `pgvector` | `embedding <=> query` 余弦距离 + HNSW 索引 | PostgreSQL + pgvector 扩展 |
+   | Milvus | `milvus` | MilvusClient + COSINE 度量 | Milvus 服务 |
+
+   `KnowledgeBase` 启动时按配置构建对应后端并灌入向量，`search()` 接口不变；
+   外部服务连不上或驱动缺失时自动降级回 local。**切换后端只改环境变量，业务代码零改动。**
 4. **注入方式**：通过 `search_faq` 工具返回给模型，由模型组织成自然语言回答。
 
-为什么不用 pgvector / Milvus？当前是教学 / 演示项目，本地向量库可以在**不装数据库**的前提下跑通完整链路。
-`KnowledgeBase` 已经把「向量化」和「检索」拆开，生产环境只需替换存储层（见第 11 节）。
+健康检查 `GET /api/health` 的 `vector_backend` 字段显示当前实际生效的后端。
 
 ---
 
@@ -318,7 +337,8 @@ Agent 把 user / assistant 消息写回 memory
 
 - 以 `session_id` 为 key，保存 `user` / `assistant` 的最终消息；
 - 只保留最近 `MAX_HISTORY=20` 条，控制 token 成本；
-- 默认存进程内字典，配置 `REDIS_URL` 后自动切换 Redis，支持多进程 / 多实例共享；
+- 默认存进程内字典，配置 `REDIS_URL` 后自动切换 **Redis**（`redis.asyncio`，带 TTL 过期），支持多进程 / 多实例共享会话；
+- 两层实现都在 `app/memory.py`，`get/append/clear` 接口一致；Redis 库缺失或服务连不上时回退内存；
 - 点「新会话」或调用 `POST /api/session/{id}/reset` 可清空。
 
 ---
@@ -403,9 +423,26 @@ cd /d E:\shop-agent
 **Q：端口被占用？**
 换端口：`python -m uvicorn app.main:app --port 8001`。
 
-**Q：为什么不用 LangChain？**
-核心就是「带 tools 的 chat completions + 循环执行工具」，手写一遍依赖更少、链路更透明，便于定位问题。
-需要时可以无缝换成 LangChain 的 `create_tool_calling_agent`，工具定义可以直接复用。
+**Q：手写循环和 LangChain 有什么区别？**
+两者都真实实现、可切换。默认的 `app/agent.py` 手写循环依赖少、链路透明、便于精确控制每一轮工具调用；
+`app/langchain_agent.py` 用 `create_tool_calling_agent + AgentExecutor`，代码更声明式、生态组件更丰富。
+设 `AGENT_FRAMEWORK=langchain` 即切换（需装 langchain 且有真实 Key），`agent_factory.py` 统一选择并在失败时回退 native。
+
+---
+
+## 13. 同类技术多实现：配置速查
+
+四个技术点都为「同一接口、可配置切换、可降级」，面试可直接演示切换：
+
+| 能力 | 默认值 | 切换方式 | 验证 |
+|---|---|---|---|
+| Web 框架 | FastAPI（8000） | `python flask_app.py` → Flask（8001） | 两个入口接口一致 |
+| Agent 编排 | native 手写循环 | `.env` 设 `AGENT_FRAMEWORK=langchain` | `/api/health` 的 `agent_framework` |
+| 向量库 | local | `.env` 设 `VECTOR_BACKEND=pgvector` 或 `milvus` | `/api/health` 的 `vector_backend` |
+| 会话存储 | 内存 | `.env` 设 `REDIS_URL=redis://...` | `/api/health` 的 `session_store` |
+
+本地无 Redis / pgvector / Milvus 服务时，装了依赖也不影响——连接失败会自动降级，
+`pytest tests/test_alt_backends.py` 用 fakeredis 和降级断言验证了这四条路径。
 
 ---
 
