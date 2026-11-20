@@ -1,0 +1,168 @@
+{
+  "timestamp": "2026-11-19 19:44:34",
+  "mode": "api",
+  "model": "qwen-plus",
+  "total": 10,
+  "passed": 8,
+  "pass_rate": 0.8,
+  "tool_accuracy": 0.8,
+  "keyword_hit_rate": 1.0,
+  "avg_latency_ms": 4447.2,
+  "cases": [
+    {
+      "id": "E01",
+      "message": "有没有降噪耳机推荐？",
+      "expect_tool": "search_products",
+      "expect_keywords": [
+        "耳机"
+      ],
+      "called_tools": [],
+      "reply": "当然有！请问您对降噪耳机有没有特别的需求？比如：\n\n- 预算范围（例如 ¥300 以内、¥1000 左右）  \n- 偏好品牌（如 Apple、Sony、华为、小满自有品牌等）  \n- 使用场景（通勤、办公、运动等）  \n- 是否需要蓝牙、续航时长、是否带麦克风通话等  \n\n如果您暂时没有特别要求，我也可以先为您推荐几款热销高性价比的降噪耳机 😊  \n需要我马上搜一下吗？",
+      "latency_ms": 3445,
+      "tool_ok": false,
+      "keyword_ok": true,
+      "pass": false
+    },
+    {
+      "id": "E02",
+      "message": "2000 元以内的手机有哪些？",
+      "expect_tool": "search_products",
+      "expect_keywords": [
+        "手机"
+      ],
+      "called_tools": [
+        "search_products"
+      ],
+      "reply": "为您找到 1 款符合要求的手机：\n\n📱 **星耀 A3 5G 手机**  \n✅ 价格：¥1599  \n✅ 特点：6.5 英寸护眼屏｜6000mAh 超长续航｜支持 33W 快充  \n✅ 库存充足（260 台）  \n\n需要我帮您查看详情、加入购物车，或推荐其他类似机型（比如更侧重拍照或性能的）吗？😊",
+      "latency_ms": 4492,
+      "tool_ok": true,
+      "keyword_ok": true,
+      "pass": true
+    },
+    {
+      "id": "E03",
+      "message": "帮我查一下订单 SO20261114002 到哪了",
+      "expect_tool": "get_order",
+      "expect_keywords": [
+        "运输中"
+      ],
+      "called_tools": [
+        "get_order"
+      ],
+      "reply": "您好！您的订单 **SO20261114002** 当前状态为：✅ **运输中**  \n📦 商品：星耀 X1 5G 手机（¥3299.00）  \n🚚 物流单号：JD9988776655（京东物流）  \n📍 收货地址：河南省郑州市中原区  \n📅 下单时间：2026-11-14 09:05  \n\n您可直接通过京东物流官网或App输入单号 JD9988776655 实时跟踪包裹动态～  \n需要我帮您查询预计送达时间，或协助其他事项吗？😊",
+      "latency_ms": 5169,
+      "tool_ok": true,
+      "keyword_ok": true,
+      "pass": true
+    },
+    {
+      "id": "E04",
+      "message": "订单 SO20261112001 的耳机有杂音，我想退货",
+      "expect_tool": "create_after_sales",
+      "expect_keywords": [
+        "工单"
+      ],
+      "called_tools": [
+        "get_order",
+        "create_after_sales"
+      ],
+      "reply": "✅ 退货申请已成功提交！  \n售后工单号：**ASD6151A24**  \n订单号：SO20261112001  \n商品：声阔 Air Pro 降噪耳机  \n\n当前状态：**待审核**  \n下一步：请留意稍后收到的短信，按指引在 **24 小时内** 将耳机寄回（顺丰到付即可，无需垫付运费）。我们收到并检测确认问题后，将在 **1–3 个工作日内** 完成退款（原路返回）或为您安排换货。\n\n如需查询物流或更新进度，随时告诉我～  \n祝您生活愉快！😊",
+      "latency_ms": 10029,
+      "tool_ok": true,
+      "keyword_ok": true,
+      "pass": true
+    },
+    {
+      "id": "E05",
+      "message": "你们满多少包邮？",
+      "expect_tool": "search_faq",
+      "expect_keywords": [
+        "包邮"
+      ],
+      "called_tools": [
+        "search_faq"
+      ],
+      "reply": "小满告诉您：  \n✅ **单笔订单实付满 ¥99 即包邮**（新疆、西藏、青海、内蒙古部分偏远地区除外）；  \n❌ 不满 ¥99 时，收取 ¥8 运费；  \n🎁 小贴士：会员每月还可领取 2 张免邮券，下单时自动抵扣哦～\n\n需要我帮您找点什么商品凑单吗？😊",
+      "latency_ms": 3626,
+      "tool_ok": true,
+      "keyword_ok": true,
+      "pass": true
+    },
+    {
+      "id": "E06",
+      "message": "可以开发票吗？",
+      "expect_tool": "search_faq",
+      "expect_keywords": [
+        "发票"
+      ],
+      "called_tools": [],
+      "reply": "当然可以！小满商城支持为订单开具电子发票（增值税普通发票），开票类型包括「商品明细」或「办公用品」，抬头可选「个人」或「企业」。\n\n请问您需要为哪个订单开发票？如果您提供订单号（例如 SO20261114002），我可以帮您确认该订单是否已支付成功，并指导您如何在App/小程序中自助申请，或为您提交开票申请哦～",
+      "latency_ms": 2683,
+      "tool_ok": false,
+      "keyword_ok": true,
+      "pass": false
+    },
+    {
+      "id": "E07",
+      "message": "耳机保修多久？",
+      "expect_tool": "search_faq",
+      "expect_keywords": [
+        "保修"
+      ],
+      "called_tools": [
+        "search_faq"
+      ],
+      "reply": "小满商城的耳机享受**全国联保 1 年**哦～  \n✅ 保修期内非人为损坏，可免费维修；  \n🚚 寄修往返运费由我们承担；  \n⚠️ 注：人为损坏（如进水、摔裂、私自拆修等）不在保修范围内。\n\n需要帮您查询某副耳机的保修状态吗？或者您遇到了具体问题（比如杂音、无法连接等），我也可以协助处理～ 😊",
+      "latency_ms": 3731,
+      "tool_ok": true,
+      "keyword_ok": true,
+      "pass": true
+    },
+    {
+      "id": "E08",
+      "message": "优惠券怎么叠加使用？",
+      "expect_tool": "search_faq",
+      "expect_keywords": [
+        "优惠券"
+      ],
+      "called_tools": [
+        "search_faq"
+      ],
+      "reply": "根据小满商城的规则：\n\n✅ 优惠券在商品详情页或活动页领取；  \n⚠️ **单笔订单仅限使用 1 张优惠券**，不可与其他满减券、折扣券叠加使用；  \n❌ 不可折现，且过期自动失效。\n\n如果你有具体想用的优惠券（比如满¥200减¥30、新人券等），我可以帮你确认是否适用于某件商品～需要我帮你查吗？ 😊",
+      "latency_ms": 3915,
+      "tool_ok": true,
+      "keyword_ok": true,
+      "pass": true
+    },
+    {
+      "id": "E09",
+      "message": "你好",
+      "expect_tool": null,
+      "expect_keywords": [
+        "小满"
+      ],
+      "called_tools": [],
+      "reply": "你好呀～我是小满商城的智能客服「小满」，很高兴为你服务！😊  \n请问有什么可以帮你的？比如：  \n- 想找某款商品（如“蓝牙耳机”“iPhone 15”）？  \n- 需要查订单物流或状态？  \n- 遇到售后问题（退货/换货/维修）？  \n- 想了解运费、发票、保修等规则？  \n\n随时告诉我吧～",
+      "latency_ms": 2663,
+      "tool_ok": true,
+      "keyword_ok": true,
+      "pass": true
+    },
+    {
+      "id": "E10",
+      "message": "订单 SO20261115003 什么时候发货？",
+      "expect_tool": "get_order",
+      "expect_keywords": [
+        "待发货"
+      ],
+      "called_tools": [
+        "get_order"
+      ],
+      "reply": "您的订单 SO20261115003（轻羽 14 轻薄本，¥4599.00）目前状态为 **待发货**，当前进度是「仓库拣货中」，预计将在 **48 小时内完成发货**（即最晚于 11月17日20:42 前发出）。\n\n发货后我们会短信通知您物流单号，您也可随时在「我的订单」中查看最新物流动态。需要我帮您关注发货提醒吗？😊",
+      "latency_ms": 4719,
+      "tool_ok": true,
+      "keyword_ok": true,
+      "pass": true
+    }
+  ]
+}
