@@ -29,6 +29,19 @@ class Settings:
     max_tool_rounds: int
     request_timeout: float
     temperature: float
+    # 向量库后端：local / pgvector / milvus
+    vector_backend: str
+    pg_dsn: str
+    pg_host: str
+    pg_port: int
+    pg_user: str
+    pg_password: str
+    pg_database: str
+    milvus_uri: str
+    milvus_token: str
+    milvus_collection: str
+    # Agent 编排框架：native（手写循环）/ langchain
+    agent_framework: str
 
 
 def load_settings() -> Settings:
@@ -46,6 +59,17 @@ def load_settings() -> Settings:
         max_tool_rounds=int(os.getenv("MAX_TOOL_ROUNDS", "5")),
         request_timeout=float(os.getenv("REQUEST_TIMEOUT", "60")),
         temperature=float(os.getenv("TEMPERATURE", "0.3")),
+        vector_backend=os.getenv("VECTOR_BACKEND", "local").strip().lower(),
+        pg_dsn=os.getenv("PG_DSN", "").strip(),
+        pg_host=os.getenv("PG_HOST", "127.0.0.1").strip(),
+        pg_port=int(os.getenv("PG_PORT", "5432")),
+        pg_user=os.getenv("PG_USER", "postgres").strip(),
+        pg_password=os.getenv("PG_PASSWORD", "").strip(),
+        pg_database=os.getenv("PG_DATABASE", "shop_agent").strip(),
+        milvus_uri=os.getenv("MILVUS_URI", "http://127.0.0.1:19530").strip(),
+        milvus_token=os.getenv("MILVUS_TOKEN", "").strip(),
+        milvus_collection=os.getenv("MILVUS_COLLECTION", "shop_agent_kb").strip(),
+        agent_framework=os.getenv("AGENT_FRAMEWORK", "native").strip().lower(),
     )
 
 
