@@ -13,6 +13,7 @@ import httpx
 
 from . import db
 from .config import BASE_DIR, settings
+from .vectorstore import build_store
 
 DIM = 512
 
@@ -74,16 +75,41 @@ class KnowledgeBase:
         texts = [f"{doc['title']}\n{doc['content']}" for doc in self.docs]
         self.vectors, self.mode = embed_texts(texts)
 
+        # 按配置构建向量存储后端（local / pgvector / milvus），失败自动降级
+        self.store, self.backend = build_store(
+            settings.vector_backend,
+            len(self.vectors[0]) if self.vectors else DIM,
+            dsn=settings.pg_dsn,
+            host=settings.pg_host,
+            port=settings.pg_port,
+            user=settings.pg_user,
+            password=settings.pg_password,
+            database=settings.pg_database,
+            milvus_uri=settings.milvus_uri,
+            milvus_token=settings.milvus_token,
+            milvus_collection=settings.milvus_collection,
+        )
+        payloads = [{"content": doc["content"], "tags": ",".join(doc.get("tags") or [])} for doc in self.docs]
+        self.store.upsert([
+            (doc["id"], vec, payload)
+            for doc, vec, payload in zip(self.docs, self.vectors, payloads)
+        ])
+
     def search(self, query: str, top_k: int = 3) -> list[dict]:
         query_vec = embed_texts([query])[0][0]
-        scored = [(_cosine(query_vec, vec), doc) for doc, vec in zip(self.docs, self.vectors)]
-        scored.sort(key=lambda item: item[0], reverse=True)
-        return [
-            {
+        hits = self.store.search(query_vec, top_k)
+        by_id = {doc["id"]: doc for doc in self.docs}
+        results = []
+        for doc_id, score in hits:
+            doc = by_id.get(doc_id)
+            if doc is None:
+                continue
+            results.append({
                 "score": round(score, 4),
                 "id": doc["id"],
                 "title": doc["title"],
                 "content": doc["content"],
-            }
-            for score, doc in scored[:top_k]
-        ]
+            })
+            if len(results) >= top_k:
+                break
+        return results
