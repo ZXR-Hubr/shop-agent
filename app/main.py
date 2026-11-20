@@ -1,4 +1,6 @@
-"""FastAPI 入口：静态页面 + 聊天接口 + 健康检查 + 会话重置。"""
+"""FastAPI 入口：静态页面 + 聊天接口 + 健康检查 + 会话重置 + 用例沉淀。"""
+import json
+import re
 import time
 import uuid
 
@@ -11,7 +13,10 @@ from .config import BASE_DIR, settings
 from . import db, runtime
 from .llm import LLMClient
 from .memory import SessionStore
-from .schemas import ChatRequest, ChatResponse, ModeRequest, ModeResponse
+from .schemas import (
+    ChatRequest, ChatResponse, EvalCaseRequest, EvalCaseResponse,
+    ModeRequest, ModeResponse,
+)
 from .tools import KB
 
 app = FastAPI(
@@ -91,3 +96,48 @@ async def switch_mode(request: ModeRequest):
         model="mock" if mode == "mock" else settings.llm_model,
         changed=True,
     )
+
+
+# ---- 评测用例库：把对话界面里聊过的问题沉淀成可回归的测试用例 ----
+CASES_PATH = BASE_DIR / "eval" / "cases.json"
+
+
+def _load_cases() -> list[dict]:
+    try:
+        data = json.loads(CASES_PATH.read_text(encoding="utf-8"))
+        return data if isinstance(data, list) else []
+    except Exception:
+        return []
+
+
+def _next_case_id(cases: list[dict]) -> str:
+    nums = []
+    for case in cases:
+        cid = str(case.get("id", ""))
+        m = re.match(r"^E(\d+)$", cid)
+        if m:
+            nums.append(int(m.group(1)))
+    return f"E{max(nums) + 1:02d}" if nums else "E01"
+
+
+@app.get("/api/eval/cases")
+async def list_cases():
+    cases = _load_cases()
+    return {"total": len(cases), "cases": cases}
+
+
+@app.post("/api/eval/cases", response_model=EvalCaseResponse)
+async def save_case(request: EvalCaseRequest):
+    cases = _load_cases()
+    case_id = _next_case_id(cases)
+    cases.append({
+        "id": case_id,
+        "category": request.category,
+        "message": request.message.strip(),
+        "expect_tool": request.expect_tool or None,
+        "expect_keywords": request.expect_keywords,
+        "note": request.note,
+        "source": "ui",  # 标记来自对话界面沉淀
+    })
+    CASES_PATH.write_text(json.dumps(cases, ensure_ascii=False, indent=2), encoding="utf-8")
+    return EvalCaseResponse(ok=True, id=case_id, total=len(cases), path="eval/cases.json")
