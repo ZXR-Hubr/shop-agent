@@ -4,3 +4,16 @@ httpx>=0.27.0
 pydantic>=2.6.0
 python-dotenv>=1.0.0
 pytest>=8.0.0
+
+# ===== 可选依赖：同类技术多实现，按需启用，未安装会自动降级 =====
+# Web 框架第二实现（Flask 入口 flask_app.py）
+flask>=3.0.0
+# 会话存储第二实现（REDIS_URL）
+redis>=5.0.0
+# 向量库双方案：pgvector / Milvus（VECTOR_BACKEND）
+psycopg2-binary>=2.9.0
+pgvector>=0.2.0
+pymilvus>=2.4.0
+# Agent 编排第二实现（AGENT_FRAMEWORK=langchain）
+langchain>=0.2.0
+langchain-openai>=0.1.0
