@@ -8,10 +8,10 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from .agent import Agent
+from .agent_factory import build_agent
 from .config import BASE_DIR, settings
 from . import db, runtime
-from .llm import LLMClient
+from .llm import LLMClient  # noqa: F401  保留以便测试/脚本直接引用
 from .memory import SessionStore
 from .schemas import (
     ChatRequest, ChatResponse, EvalCaseRequest, EvalCaseResponse,
@@ -30,7 +30,7 @@ memory = SessionStore(
     max_history=settings.max_history,
     redis_url=settings.redis_url,
 )
-agent = Agent(LLMClient(), memory)
+agent = build_agent(memory)
 
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
@@ -46,7 +46,10 @@ async def health():
         "status": "ok",
         "mode": runtime.get_mode(),
         "model": "mock" if runtime.is_mock() else settings.llm_model,
-        "vector_backend": KB.mode,
+        "vector_backend": KB.backend,
+        "vector_embed": KB.mode,
+        "agent_framework": settings.agent_framework if not runtime.is_mock() else "native",
+        "session_store": "redis" if memory._redis is not None else "memory",
         "kb_size": len(KB.docs),
         "data_source": "mysql" if KB.source == "mysql" else "json",
         "mysql_connected": db.ping(),
