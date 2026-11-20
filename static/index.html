@@ -108,6 +108,29 @@
     background: #0f172a; color: #d7e3f4;
     font-size: 11.5px; line-height: 1.55; overflow: auto; max-height: 240px;
   }
+  .save-case-btn {
+    margin-top: 8px; border: 0; background: transparent; cursor: pointer;
+    font-size: 12px; color: var(--muted); padding: 2px 0;
+  }
+  .save-case-btn:hover { color: var(--brand); }
+  .case-form {
+    margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 10px;
+    display: flex; flex-direction: column; gap: 8px; font-size: 12px;
+  }
+  .case-form label { display: flex; flex-direction: column; gap: 3px; color: var(--muted); }
+  .case-form input, .case-form select {
+    border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px;
+    font: inherit; font-size: 12px; color: var(--text); background: #fff;
+  }
+  .case-form .row { display: flex; gap: 8px; }
+  .case-form .row > * { flex: 1; min-width: 0; }
+  .case-form .btns { display: flex; gap: 8px; justify-content: flex-end; }
+  .case-form button {
+    border: 1px solid var(--line); border-radius: 8px; padding: 5px 12px;
+    font-size: 12px; cursor: pointer; background: #fff; color: #334155;
+  }
+  .case-form button.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .case-ok { color: var(--brand); font-size: 12px; margin-top: 6px; }
   .typing { display: inline-flex; gap: 4px; align-items: center; min-height: 20px; }
   .typing span {
     width: 6px; height: 6px; border-radius: 50%; background: #94a3b8;
@@ -257,7 +280,10 @@
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
-  function addMessage(role, text, trace) {
+  const TOOL_OPTIONS = ['search_products', 'get_order', 'create_after_sales', 'get_after_sales', 'search_faq'];
+  const CATEGORY_OPTIONS = ['功能', '边界', '多轮', '拒答', '越权'];
+
+  function addMessage(role, text, trace, caseInfo) {
     const wrap = document.createElement('div');
     wrap.className = 'msg ' + role;
 
@@ -283,6 +309,62 @@
         details.appendChild(pre);
       });
       bubble.appendChild(details);
+    }
+
+    if (role === 'assistant' && caseInfo) {
+      const saveBtn = document.createElement('button');
+      saveBtn.className = 'save-case-btn';
+      saveBtn.textContent = '+ 存为测试用例';
+      saveBtn.addEventListener('click', () => {
+        if (bubble.querySelector('.case-form')) { bubble.querySelector('.case-form').remove(); return; }
+        const form = document.createElement('div');
+        form.className = 'case-form';
+        form.innerHTML =
+          '<label>用户问题<input type="text" class="cf-msg" /></label>' +
+          '<div class="row">' +
+            '<label>期望工具<select class="cf-tool"><option value="">（不调用工具）</option>' +
+              TOOL_OPTIONS.map(t => '<option value="' + t + '">' + t + '</option>').join('') +
+            '</select></label>' +
+            '<label>场景分类<select class="cf-cat">' +
+              CATEGORY_OPTIONS.map(c => '<option value="' + c + '">' + c + '</option>').join('') +
+            '</select></label>' +
+          '</div>' +
+          '<label>期望关键词（逗号分隔）<input type="text" class="cf-kw" /></label>' +
+          '<div class="btns"><button type="button" class="cancel">取消</button>' +
+          '<button type="button" class="primary save">保存</button></div>';
+        form.querySelector('.cf-msg').value = caseInfo.message || '';
+        form.querySelector('.cf-tool').value = (caseInfo.tools && caseInfo.tools[0]) || '';
+        const guessedCat = (caseInfo.tools && caseInfo.tools.length) ? '功能' : '拒答';
+        form.querySelector('.cf-cat').value = guessedCat;
+        form.querySelector('.cancel').addEventListener('click', () => form.remove());
+        form.querySelector('.save').addEventListener('click', async () => {
+          const payload = {
+            message: form.querySelector('.cf-msg').value.trim(),
+            expect_tool: form.querySelector('.cf-tool').value || null,
+            category: form.querySelector('.cf-cat').value,
+            expect_keywords: form.querySelector('.cf-kw').value.split(/[,，]/).map(s => s.trim()).filter(Boolean)
+          };
+          if (!payload.message) return;
+          const btn = form.querySelector('.save');
+          btn.disabled = true; btn.textContent = '保存中…';
+          try {
+            const r = await fetch('/api/eval/cases', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+            });
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            const d = await r.json();
+            const ok = document.createElement('div');
+            ok.className = 'case-ok';
+            ok.textContent = '已保存为 ' + d.id + '（用例库共 ' + d.total + ' 条）';
+            form.replaceWith(ok);
+          } catch (e) {
+            btn.disabled = false; btn.textContent = '保存';
+            alert('保存失败：' + e.message);
+          }
+        });
+        bubble.appendChild(form);
+      });
+      bubble.appendChild(saveBtn);
     }
 
     wrap.appendChild(avatar);
@@ -330,7 +412,8 @@
       sessionId = data.session_id;
       localStorage.setItem('xiaoman_sid', sessionId);
       typing.remove();
-      addMessage('assistant', data.reply, data.tool_calls);
+      const usedTools = (data.tool_calls || []).map(t => t.name);
+      addMessage('assistant', data.reply, data.tool_calls, { message: content, tools: usedTools });
     } catch (err) {
       typing.remove();
       addMessage('assistant', '抱歉，服务暂时不可用，请稍后再试。（' + err.message + '）');
