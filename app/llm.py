@@ -73,18 +73,64 @@ def _mock_chat(messages: list[dict]) -> dict:
             "usage": {"mock": True},
         }
 
+    # 非业务问题：Mock 也给出客服式引导，不调用工具（对应「拒答」类评测）
+    if any(word in user for word in ["天气", "笑话", "讲个", "你是谁", "什么模型", "谁开发", "几句"]):
+        return {
+            "content": "抱歉，我是小满商城的智能客服，主要帮您处理商品咨询、订单查询和售后问题，购物相关的问题我都可以帮您～",
+            "tool_calls": [],
+            "usage": {"mock": True},
+        }
+
+    # 从上下文最近的 user 消息里找订单号（多轮承接用）
+    def _ctx_order_id():
+        for m in reversed(messages):
+            if m.get("role") == "user":
+                mm = ORDER_RE.search((m.get("content") or ""))
+                if mm:
+                    return mm.group(0).upper()
+        return ""
+
+    # 售后进度但没给订单号：列出最近工单
+    if any(word in user for word in ["工单", "售后"]) and any(
+        word in user for word in ["最近", "进度", "查", "看看"]
+    ) and not ORDER_RE.search(user):
+        return {
+            "content": "",
+            "tool_calls": [{
+                "id": "call_mock_ca", "type": "function",
+                "function": {"name": "get_after_sales", "arguments": "{}"},
+            }],
+            "usage": {"mock": True},
+        }
+
     match = ORDER_RE.search(user)
+    # 本轮就是纯订单号（多轮承接），直接当查订单
+    if not match and ORDER_RE.fullmatch(user.strip()):
+        match = ORDER_RE.search(user.strip())
+    if not match and any(w in user for w in ["它", "这单", "那单", "这个订单", "退货进度", "换货进度"]):
+        match = ORDER_RE.search(_ctx_order_id())
     order_id = match.group(0).upper() if match else ""
+
+    # 缺订单号却要查订单状态：主动追问，不调用工具（边界 / 多轮评测）
+    if not order_id and any(word in user for word in ["订单", "物流", "到哪", "发货"]) and not any(
+        word in user for word in ["退", "换", "运费", "包邮", "发票", "保修", "优惠券", "积分", "地址"]
+    ):
+        return {
+            "content": "请提供一下订单号（例如 SO20261114002），我就能帮您查询订单状态啦。",
+            "tool_calls": [],
+            "usage": {"mock": True},
+        }
 
     if order_id and any(word in user for word in ["进度", "售后单", "退到哪", "换到哪", "工单", "处理到"]):
         # 查询已有退货 / 换货 / 维修工单的进度
         name, arguments = "get_after_sales", {"order_id": order_id}
     elif order_id and any(word in user for word in ["申请退", "我要退", "想退", "申请换", "要换货", "维修", "坏", "杂音"]):
         name, arguments = "create_after_sales", {"order_id": order_id, "reason": user}
-    elif order_id and any(word in user for word in ["订单", "物流", "到哪", "发货", "状态", "什么时候", "查"]):
+    elif order_id:
+        # 有订单号且无更具体意图（如纯订单号承接上文）→ 默认查订单
         name, arguments = "get_order", {"order_id": order_id}
     elif any(word in user for word in [
-        "退", "换", "运费", "包邮", "发票", "保修", "优惠券", "发货时间", "地址", "退款", "人工", "客服", "支付", "积分",
+        "退", "换", "运费", "包邮", "发票", "保修", "优惠券", "发货时间", "地址", "退款", "人工", "客服", "支付", "付款", "积分", "货到",
     ]):
         name, arguments = "search_faq", {"query": user}
     else:
