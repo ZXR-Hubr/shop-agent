@@ -11,6 +11,7 @@ import json
 import logging
 
 from .config import settings
+from .guard import check as guard_check
 from .llm import LLMClient
 from .memory import SessionStore
 from .tools import TOOL_IMPL, TOOLS
@@ -34,6 +35,12 @@ class Agent:
         self.memory = memory
 
     async def chat(self, session_id: str, user_message: str) -> dict:
+        # 安全护栏：注入 / 越权请求直接拒答，不进入 LLM 循环、不调用任何工具
+        refusal = guard_check(user_message)
+        if refusal:
+            logger.info("Guardrail 拦截: %s", user_message[:60])
+            return {"reply": refusal, "tool_calls": [], "usage": {}, "blocked": True}
+
         history = await self.memory.get(session_id)
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
