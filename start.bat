@@ -17,7 +17,9 @@ if not exist "%PY%" goto novenv
 
 echo Starting server, please wait a few seconds ...
 echo (Keep this window open. It IS the server.)
+echo Local URL: http://127.0.0.1:8000
 echo.
+start "" /b "%PY%" -c "import time,webbrowser; time.sleep(4); webbrowser.open('http://127.0.0.1:8000')" >nul 2>&1
 "%PY%" -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 echo.
 echo Server stopped.
