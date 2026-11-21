@@ -5,6 +5,9 @@
 
 > 没有 API Key 也能跑：未配置 Key 时自动进入 **Mock 模式**，完整走一遍「模型决策 → 调用工具 → 生成回答」的链路。
 
+> **桌面软件版**：已提供 PyInstaller 打包方案，双击 exe 弹出独立应用窗口（无地址栏、无需装 Python）。
+> 完整打包步骤、原理与排错见 [`docs/打包成桌面软件.md`](docs/打包成桌面软件.md)。
+
 ## 📊 成果速览（面试先看这里）
 
 | 指标 | 结果 | 说明 |
@@ -12,7 +15,7 @@
 | LLM 评测通过率 | **35/35 · 100%** | 真实 API 模式（qwen 系列）跑通，非 Mock 自测 |
 | 工具选择准确率 | **100%** | 5 个工具，含边界 / 多轮 / 拒答场景 |
 | 安全护栏拦截率 | **5/5 · 100%** | 提示注入、系统提示套取、越权查单全部拦截 |
-| 单元测试 | **19 项全通过** | pytest |
+| 单元测试 | **24 项全通过** | pytest |
 | 知识库 / 业务数据 | 12 条知识 + 9 商品 + 14 订单 + 10 售后工单 | MySQL 与 JSON 双数据源 |
 | 平均响应耗时 | 约 6.2 秒 / 次 | 真实 LLM 多轮工具调用（Mock 模式毫秒级） |
 
@@ -81,7 +84,7 @@ shop-agent/
 │  └─ init_db.py       # 建库建表 + 从 JSON 导入示例数据（幂等）
 ├─ data/
 │  ├─ products.json    # 商品数据（9 条）
-│  ├─ orders.json      # 订单数据（5 条）
+│  ├─ orders.json      # 订单数据（14 条）
 │  └─ kb.json          # 客服知识库（12 条）
 ├─ static/index.html   # 聊天页面
 ├─ eval/
@@ -446,13 +449,13 @@ cd /d E:\shop-agent
 
 ---
 
-## 13. 开发者讲解
+## 14. 开发者讲解
 
 想把这个项目讲清楚（开发流程、使用方法、内部逻辑、面试追问），看 [`docs/开发者讲解.md`](docs/开发者讲解.md)。
 
 ---
 
-## 14. MySQL 数据库设计
+## 15. MySQL 数据库设计
 
 ### 表结构
 
@@ -461,7 +464,7 @@ cd /d E:\shop-agent
 | 表 | 字段 | 说明 |
 |---|---|---|
 | `products` | product_id(PK), name, category, price, stock, tags, description | 商品，9 条 |
-| `orders` | order_id(PK), product_id, product_name, status, amount, logistics, created_at, address | 订单，5 条 |
+| `orders` | order_id(PK), product_id, product_name, status, amount, logistics, created_at, address | 订单，14 条 |
 | `kb_articles` | id(PK), title, content, tags | RAG 知识库，12 条 |
 | `after_sales_tickets` | ticket_id(PK), order_id, product_name, reason, status, created_at | 售后工单，运行时写入 |
 
